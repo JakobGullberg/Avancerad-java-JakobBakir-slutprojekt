@@ -1,2 +1,2 @@
 # Avancerad-java-JakobBakir-slutprojekt
-To do list - slutproject
+To do list - slutprojekt
