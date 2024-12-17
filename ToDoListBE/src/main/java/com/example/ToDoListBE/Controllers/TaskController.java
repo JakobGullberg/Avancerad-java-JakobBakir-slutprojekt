@@ -16,7 +16,7 @@ public class TaskController {
 
     // Konstruktor som lägger till några exempeluppgifter
     public TaskController() {
-        tasks.add(new Task(1, "Gör läxan", "Matematikuppgifter", "2024-12-20"));
+        tasks.add(new Task(1, "Göra läxan", "Matematikuppgifter", "2024-12-20"));
         tasks.add(new Task(2, "Städa rummet", "Plocka undan och dammsug", "2024-12-21"));
         tasks.add(new Task(3, "Handla mat", "Köp mjölk, bröd och ägg", "2024-12-22"));
     }
