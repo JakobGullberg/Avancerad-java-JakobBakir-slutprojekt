@@ -1,78 +1,86 @@
 package com.example.ToDoListBE.Controllers;
 
 import com.example.ToDoListBE.Models.Task;
+import com.example.ToDoListBE.Services.TaskServiceImpl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
 import java.util.List;
 
-// RestController hanterar alla API-anrop för uppgiftshantering
+// Denna klass är en REST-kontroller för att hantera API, hämtas från Spring.
 @RestController
-@RequestMapping("/api/tasks") // Bas-URL för API:et
+@RequestMapping("/api/tasks") // Bas-URL för alla endpoints.
 public class TaskController {
-    private List<Task> tasks = new ArrayList<>(); // Lista för att lagra uppgifter i minnet
+    // Skapar en objekt av TaskServiceImpl.
+    private final TaskServiceImpl taskService = new TaskServiceImpl();
 
-    // Konstruktor som lägger till några exempeluppgifter
+    // Konstruktor för några exempel uppgifter.
     public TaskController() {
-        tasks.add(new Task(1, "Gör läxan", "Matematikuppgifter", "2024-12-20"));
-        tasks.add(new Task(2, "Städa rummet", "Plocka undan och dammsug", "2024-12-21"));
-        tasks.add(new Task(3, "Handla mat", "Köp mjölk, bröd och ägg", "2024-12-22"));
+        taskService.addTask(new Task(1, "Gör läxan", "Matematikuppgifter", "2024-12-20"));
+        taskService.addTask(new Task(2, "Städa rummet", "Plocka undan och dammsug", "2024-12-21"));
+        taskService.addTask(new Task(3, "Handla mat", "Köp mjölk, bröd och ägg", "2024-12-22"));
     }
 
-    // GET /api/tasks - Hämtar alla uppgifter
+    // Endpoint för att hämta alla uppgifter.
+    // GET /api/tasks
     @GetMapping
     public List<Task> getAllTasks() {
-        return tasks; // Returnerar hela listan av uppgifter
+        // Returnerar en lista med alla uppgifter.
+        return taskService.getAllTasks();
     }
 
-    // GET /api/tasks/{id} - Hämtar en specifik uppgift med dess ID
+    // Endpoint för att hämta en specifik uppgift med dess ID.
+    // GET /api/tasks/{id}
     @GetMapping("/{id}")
     public ResponseEntity<Task> getTaskById(@PathVariable int id) {
-        // Söker efter uppgiften med det givna ID:et
-        return tasks.stream()
-                .filter(task -> task.getId() == id)
-                .findFirst()
-                .map(ResponseEntity::ok) // Returnerar uppgiften om den hittas
-                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).build()); // Om inte, returnera 404
+        // Hämtar uppgiften med det givna ID:t.
+        Task task = taskService.getTaskById(id);
+        // Returnerar uppgiften om den finns, annars 404 Not Found.
+        return task != null ? ResponseEntity.ok(task) : ResponseEntity.status(HttpStatus.NOT_FOUND).build();
     }
 
-    // POST /api/tasks - Skapar en ny uppgift
+    // Endpoint för att lägga till en ny uppgift.
+    // POST /api/tasks
     @PostMapping
     public ResponseEntity<Task> addTask(@RequestBody Task task) {
-        if (task != null && task.getId() > 0) {
-            tasks.add(task); // Lägger till den nya uppgiften i listan
-            return ResponseEntity.status(HttpStatus.CREATED).body(task); // Returnerar 201 Created
-        } else {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build(); // Returnerar 400 Bad Request om input är felaktig
+        try {
+            // Lägger till den nya uppgiften och returnerar den med status 201 Created.
+            Task createdTask = taskService.addTask(task);
+            return ResponseEntity.status(HttpStatus.CREATED).body(createdTask);
+        } catch (Exception e) {
+            // Om något går fel, returneras status 400 Bad Request.
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
         }
     }
 
-    // PUT /api/tasks/{id} - Uppdaterar en befintlig uppgift
+    // Endpoint för att uppdatera en befintlig uppgift med dess ID.
+    // PUT /api/tasks/{id}
     @PutMapping("/{id}")
-    public ResponseEntity<Task> updateTask(@PathVariable int id, @RequestBody Task updatedTask) {
-        for (Task task : tasks) {
-            if (task.getId() == id) {
-                // Uppdaterar fält med nya värden
-                task.setName(updatedTask.getName());
-                task.setDescription(updatedTask.getDescription());
-                task.setDate(updatedTask.getDate());
-                return ResponseEntity.ok(task); // Returnerar den uppdaterade uppgiften
-            }
+    public ResponseEntity<?> updateTask(@PathVariable int id, @RequestBody Task updatedTask) {
+        // Uppdaterar uppgiften med det givna ID.
+        Task task = taskService.updateTask(id, updatedTask);
+        if (task != null) {
+            // Returnerar den uppdaterade uppgiften om den hittas.
+            return ResponseEntity.ok(task);
+        } else {
+            // Returnerar 404 Not Found om uppgiften inte hittas.
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).build(); // Returnerar 404 om uppgiften inte hittades
     }
 
-    // DELETE /api/tasks/{id} - Tar bort en specifik uppgift
+    // Endpoint för att ta bort en uppgift med dess ID.
+    // DELETE /api/tasks/{id}
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteTask(@PathVariable int id) {
-        // Försöker ta bort uppgiften med det givna ID:et
-        boolean removed = tasks.removeIf(task -> task.getId() == id);
+        // Försöker ta bort uppgiften med det givna ID:t.
+        boolean removed = taskService.deleteTask(id);
         if (removed) {
-            return ResponseEntity.ok("Task with ID " + id + " has been removed."); // Returnerar 200 OK om uppgiften togs bort
+            // Om allt fungerar returneras ok.
+            return ResponseEntity.ok("Task with ID " + id + " has been removed.");
         } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Task with ID " + id + " not found."); // Returnerar 404 om uppgiften inte hittades
+            // Om uppgiften inte hittas, returneras 404 Not Found.
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Task with ID " + id + " not found.");
         }
     }
 }
