@@ -8,33 +8,31 @@ public class TaskServiceImpl extends AbstractTaskService {
 
     @Override
     public Task addTask(Task task) {
-        // Genererar ett nytt ID per auto om ID fattas eller ogiltigt.
-        int newId = tasks.stream()
-                .mapToInt(Task::getId) // Extraherar ID från varje uppgift.
-                .max()                 // Hittar det högsta ID:t i listan.
-                .orElse(0) + 1;        // Om listan är tom, starta från 1.
+        // Genererar ett nytt ID automatiskt om ID saknas eller är ogiltigt.
+        int newId = tasks.keySet().stream()
+                .mapToInt(Integer::intValue) // Extraherar alla ID från nycklarna i HashMapen.
+                .max()                      // Hittar det högsta ID:t i HashMapen.
+                .orElse(0) + 1;             // Om HashMapen är tom, starta från 1.
 
-        // Sätter ny ID på uppgiften.
+        // Sätter nytt ID på uppgiften.
         task.setId(newId);
-        // Lägger till uppgiften i listan.
-        tasks.add(task);
-        return task; // Returnerar nya uppgiften.
+        // Lägg till den nya uppgiften i HashMapen.
+        tasks.put(task.getId(), task);
+        return task; // Returnerar den nya uppgiften.
     }
 
     @Override
     public Task updateTask(int id, Task updatedTask) {
-        // Listar alla uppgifter i listan.
-        for (Task task : tasks) {
-            // Om en uppgift med ID hittas.
-            if (task.getId() == id) {
-                // Uppdaterar uppgiftens fält med värden från den uppdaterade uppgiften.
-                task.setName(updatedTask.getName());
-                task.setDescription(updatedTask.getDescription());
-                task.setDate(updatedTask.getDate());
-                return task; // Returnerar den uppdaterade uppgiften.
-            }
+        // Kontrollera om uppgiften med det givna ID:t finns i HashMapen.
+        if (tasks.containsKey(id)) {
+            // Uppdaterar uppgiftens fält med värden från den uppdaterade uppgiften.
+            Task existingTask = tasks.get(id);
+            existingTask.setName(updatedTask.getName());
+            existingTask.setDescription(updatedTask.getDescription());
+            existingTask.setDate(updatedTask.getDate());
+            return existingTask; // Returnerar den uppdaterade uppgiften.
         }
-        // Om ingen uppgift med ID hittas, returnera null.
+        // Om ingen uppgift med det givna ID:t hittas, returnera null.
         return null;
     }
 }
